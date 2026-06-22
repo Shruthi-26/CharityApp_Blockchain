@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🌍 Block Charity + Disaster Alert</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;margin:0;background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);background-size:cover;color:
+#fff;background-image: url("clone.jpg");display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding:40px 20px;}
+.wrap{width:100%;max-width:960px;animation:fadeIn 1s ease;}
+h1{
+  text-align:center;
+  font-size:2.2rem;
+  background:linear-gradient(45deg,#00c6ff,#ff6ec7);
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+  color:transparent;
+  animation:glow 3s infinite alternate ease-in-out;
+}
+.grid{display:grid;grid-template-columns:1fr 380px;gap:20px;}
+@media(max-width:900px){.grid{grid-template-columns:1fr;}}
+.card{background:rgba(255,255,255,0.05);border-radius:14px;padding:18px;backdrop-filter:blur(12px);margin-bottom:16px;box-shadow:0 10px 35px rgba(0,0,0,0.4);transition:transform 0.3s, box-shadow 0.3s;}
+.card:hover{transform:translateY(-5px);box-shadow:0 15px 45px rgba(0,255,255,0.4);}
+label{display:block;font-size:0.88rem;margin-top:8px;color:#e0efff;}
+input,select,button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:10px;font-size:1rem;}
+input,select{background:rgba(255,255,255,0.08);color:#fff;}
+input::placeholder{color:#ccc;}
+button.primary{background:linear-gradient(45deg,#00c6ff,#0072ff);color:#fff;font-weight:600;cursor:pointer;transition:all .3s;}
+button.primary:hover{transform:scale(1.05);}
+button.muted{background:rgba(255,255,255,0.08);color:#eee;}
+#chatLog{min-height:150px;white-space:pre-wrap;background:rgba(255,255,255,0.03);padding:12px;border-radius:10px;margin-top:12px;font-size:0.95rem;color:#e8f6ff;}
+#typing{font-style:italic;color:#cfe9ff;display:none;margin-top:8px;}
+/* Popup Styles */
+#donPopup {
+  display:none;
+  position:fixed; top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.7); backdrop-filter:blur(6px);
+  justify-content:center; align-items:center; z-index:1000;
+  animation:fadeIn 0.3s ease;
+}
+.popup-content {
+  background:linear-gradient(135deg,#00c6ff,#ff6ec7);
+  padding:24px; border-radius:16px;
+  text-align:center; color:#fff; min-width:280px;
+  box-shadow:0 15px 40px rgba(0,0,0,0.6);
+  animation:scaleIn 0.3s ease;
+}
+.popup-actions { display:flex; justify-content:space-around; margin-top:20px; }
+.popup-actions button{ width:40%; }
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+@keyframes glow{from{text-shadow:0 0 6px #00c6ff;}to{text-shadow:0 0 26px #ff6ec7;}}
+@keyframes scaleIn{from{transform:scale(0.7);}to{transform:scale(1);}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🌍 Block Charity + Disaster Alerts</h1>
+<div class="grid">
+<!-- Left Column -->
+<div>
+<!-- Wallet -->
+<div class="card">
+<strong>🔗 Wallet</strong>
+<p id="walletChip">Not connected</p>
+<button class="primary" id="connectBtn">Connect Wallet</button>
+<button class="muted" id="disconnectBtn">Disconnect</button>
+</div>
+<!-- Chatbot -->
+<div class="card">
+<strong>🤖 Chatbot Assistant</strong>
+<label>Language</label>
+<select id="lang">
+<option value="en">English</option>
+<option value="hi">Hindi</option>
+<option value="kn">Kannada</option>
+<option value="ta">Tamil</option>
+<option value="es">Spanish</option>
+</select>
+<label>Ask something</label>
+<input id="chatMsg" placeholder="Type or use 🎤..." />
+<div style="margin-top:8px;">
+<button id="sendBtn" class="primary">💬 Send</button>
+<button id="micBtn" class="muted">🎤 Speak</button>
+<button id="clearBtn" class="muted">🧹 Clear</button>
+</div>
+<p id="typing">Bot is typing...</p>
+<div id="chatLog">✨ Welcome! Ask me about NGOs, donations, or alerts.</div>
+</div>
+</div>
+<!-- Right Column -->
+<div>
+<!-- Donation -->
+<div class="card" id="donateCard">
+<strong>💸 Donate to NGO</strong>
+<input id="donorId" placeholder="Donor ID" />
+<input id="ngoId" placeholder="NGO ID" />
+<input id="disasterId" placeholder="Disaster ID (ex: FLOOD-2025)" />
+<input id="donAmount" placeholder="Amount (ETH)" />
+<button class="primary" id="donateBtn">Donate Now</button>
+<p id="donStatus"></p>
+
+<!-- Popup -->
+<div id="donPopup" class="popup">
+  <div class="popup-content">
+    <h3>Confirm Donation</h3>
+    <p id="popupMsg"></p>
+    <div class="popup-actions">
+      <button id="confirmBtn" class="primary">✅ Confirm</button>
+      <button id="cancelBtn" class="muted">❌ Cancel</button>
+    </div>
+  </div>
+</div>
+</div>
+<!-- Disaster Alert -->
+<div class="card">
+<h3>⚠️ Disaster Alert</h3>
+<label>Type</label>
+<select id="alertType"><option>Flood</option><option>Earthquake</option><option>Cyclone</option></select>
+<label>Location</label><input id="alertLocation" placeholder="Ex: Kerala" />
+<label>Severity</label><select id="alertSeverity"><option>Advisory</option><option>Warning</option><option>Emergency</option></select>
+<button class="primary" id="genAlert">🚨 Generate Alert</button>
+<div id="alertsList" style="margin-top:12px;font-size:0.9rem;"></div>
+</div>
+</div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+<script>
+// --- DOM ---
+const connectBtn=document.getElementById('connectBtn');
+const disconnectBtn=document.getElementById('disconnectBtn');
+const walletChip=document.getElementById('walletChip');
+const sendBtn=document.getElementById('sendBtn');
+const clearBtn=document.getElementById('clearBtn');
+const micBtn=document.getElementById('micBtn');
+const chatLog=document.getElementById('chatLog');
+const typingEl=document.getElementById('typing');
+const chatMsg=document.getElementById('chatMsg');
+const langEl=document.getElementById('lang');
+const donateBtn=document.getElementById('donateBtn');
+const donStatus=document.getElementById('donStatus');
+const genAlertBtn=document.getElementById('genAlert');
+const alertsList=document.getElementById('alertsList');
+
+const donPopup=document.getElementById("donPopup");
+const popupMsg=document.getElementById("popupMsg");
+const confirmBtn=document.getElementById("confirmBtn");
+const cancelBtn=document.getElementById("cancelBtn");
+
+let account=null, web3, contract, recognition, listening=false;
+
+
+const langMap={en:{sr:'en-US',tts:'en-US'},hi:{sr:'hi-IN',tts:'hi-IN'},kn:{sr:'kn-IN',tts:'kn-IN'},ta:{sr:'ta-IN',tts:'ta-IN'},es:{sr:'es-ES',tts:'es-ES'}};
+const responses = {
+en:{hello:"Hello 👋 How can I help you?",ngo:"We have 200+ verified NGOs ✅.",donate:"Please enter NGO ID and donation amount below 💸.",fallback:"✨ I’m still learning!"},
+ta:{hello:"வணக்கம் 👋 எப்படி உதவலாம்?",ngo:"நமக்கு 200+ சரிபார்க்கப்பட்ட NGOs உள்ளன ✅.",donate:"தயவுசெய்து NGO ஐடி மற்றும் நன்கொடை தொகையை உள்ளிடவும் 💸.",fallback:"✨ நான் இன்னும் கற்றுக்கொள்கிறேன்!"},
+hi:{hello:"नमस्ते 👋 मैं आपकी कैसे मदद कर सकता हूँ?",ngo:"हमारे पास 200+ सत्यापित NGOs हैं ✅।",donate:"कृपया NGO ID और दान राशि दर्ज करें 💸।",fallback:"✨ मैं अभी सीख रहा हूँ!"},
+kn:{hello:"ಹಲೋ 👋 ನಾನು ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?",ngo:"ನಮಗೆ 200+ ಪರಿಶೀಲಿತ NGOs ಇರುವವು ✅.",donate:"ದಯವಿಟ್ಟು NGO ID ಮತ್ತು ದಾನ ಮೊತ್ತವನ್ನು ನಮೂದಿಸಿ 💸.",fallback:"✨ ನಾನು ಇನ್ನೂ ಕಲಿಯುತ್ತಿದ್ದೇನೆ!"},
+es:{hello:"¡Hola 👋! ¿Cómo puedo ayudarte?",ngo:"Tenemos más de 200 ONG verificadas ✅.",donate:"Por favor ingrese el ID de la ONG y la cantidad 💸.",fallback:"✨ ¡Todavía estoy aprendiendo!"}
+};
+
+// --- Contract ---
+const contractAddress="0xde7e78cc961493ad41def6951bc92c884614a896"; 
+const abi=[ 
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "donorId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "ngoId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "disasterId",
+				"type": "string"
+			}
+		],
+		"name": "donate",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "donor",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "donorId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "ngoId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "disasterId",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "DonationReceived",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address payable",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "withdraw",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "balances",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "contractBalance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "ngoId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "index",
+				"type": "uint256"
+			}
+		],
+		"name": "getDonation",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "ngoId",
+				"type": "uint256"
+			}
+		],
+		"name": "getDonationsCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "ngoDonations",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "donorId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "ngoId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "disasterId",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+
+
+connectBtn.addEventListener("click", async ()=>{
+  if(window.ethereum){
+    try{
+      const accounts=await ethereum.request({method:'eth_requestAccounts'});
+      account=accounts[0];
+      walletChip.textContent=`Connected: ${account.slice(0,6)}...${account.slice(-4)}`;
+      web3=new Web3(window.ethereum);
+      contract=new web3.eth.Contract(abi,contractAddress);
+    }catch(e){alert("⚠ Wallet connection failed");}
+  }else alert("Install MetaMask");
+});
+disconnectBtn.addEventListener("click",()=>{account=null; walletChip.textContent="Not connected";});
+
+
+async function sendMessage(){
+  const msg=chatMsg.value.trim(); const uiLang=langEl.value;
+  if(!msg) return; appendLog("You: "+msg); chatMsg.value=''; typingEl.style.display='block';
+  setTimeout(()=>{
+    typingEl.style.display='none';
+    const res=responses[uiLang]||responses.en;
+    let reply;
+    if(msg.toLowerCase().includes("hello")||msg.includes("வணக்கம்")||msg.includes("नमस्ते")) reply=res.hello;
+    else if(msg.toLowerCase().includes("ngo")||msg.includes("NGO")) reply=res.ngo;
+    else if(msg.toLowerCase().includes("donate")||msg.includes("நன்கொடை")||msg.includes("दान")) reply=res.donate;
+    else reply=res.fallback;
+    appendLog("Bot: "+reply); speakText(reply,uiLang);
+  },1000);
+}
+sendBtn.addEventListener('click',sendMessage);
+chatMsg.addEventListener('keydown',e=>{if(e.key==='Enter') sendMessage();});
+clearBtn.addEventListener('click',()=>{chatLog.textContent="✨ Welcome! Ask me about NGOs, donations, or alerts.";});
+function appendLog(t){chatLog.textContent+="\n"+t; chatLog.scrollTop=chatLog.scrollHeight;}
+function speakText(text,uiLang){if(!('speechSynthesis'in window))return; const u=new SpeechSynthesisUtterance(text); u.lang=langMap[uiLang]?.tts||'en-US'; speechSynthesis.cancel(); speechSynthesis.speak(u);}
+
+
+function setupRecognition(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition; if(!SR){micBtn.disabled=true; return;}
+  recognition=new SR(); recognition.interimResults=false;
+  recognition.onresult=e=>{chatMsg.value=e.results[0][0].transcript; sendBtn.click();};
+  recognition.onend=()=>{listening=false; micBtn.textContent="🎤 Speak";};
+}
+setupRecognition();
+micBtn.addEventListener('click',()=>{if(!recognition)return;if(!listening){recognition.lang=langMap[langEl.value]?.sr;recognition.start();listening=true;micBtn.textContent="⏹ Stop";}else{recognition.stop();}});
+
+
+donateBtn.addEventListener("click", async () => {
+  if (!account) { donStatus.textContent = "⚠ Connect wallet first!"; return; }
+
+  const donorId = Number(document.getElementById("donorId").value);
+  const ngoId = Number(document.getElementById("ngoId").value);
+  const disasterId = document.getElementById("disasterId").value.trim();
+  const amountEth = parseFloat(document.getElementById("donAmount").value);
+
+  if (!donorId || !ngoId || !disasterId || !amountEth) { donStatus.textContent = "⚠ Fill all fields!"; return; }
+
+  popupMsg.textContent = `You are about to donate ${amountEth} ETH to NGO #${ngoId} for ${disasterId}.`;
+  donPopup.style.display = "flex";
+});
+cancelBtn.addEventListener("click", ()=>{donPopup.style.display="none";});
+confirmBtn.addEventListener("click", async ()=>{
+  donPopup.style.display = "none";
+  donStatus.textContent = "⏳ Processing transaction...";
+  const donorId = Number(document.getElementById("donorId").value);
+  const ngoId = Number(document.getElementById("ngoId").value);
+  const disasterId = document.getElementById("disasterId").value.trim();
+  const amountEth = parseFloat(document.getElementById("donAmount").value);
+  const amountWei = web3.utils.toWei(amountEth.toString(),"ether");
+
+  try{
+    const gasEstimate = await contract.methods.donate(donorId, ngoId, disasterId).estimateGas({ from: account, value: amountWei });
+    await contract.methods.donate(donorId, ngoId, disasterId).send({ from: account, value: amountWei, gas: gasEstimate });
+
+    donStatus.textContent = `✅ Donated ${amountEth} ETH to NGO #${ngoId}`;
+    appendLog(`Bot: Donation successful to NGO #${ngoId}!`);
+    speakText("Donation successful!", langEl.value);
+
+    const card = document.getElementById("donateCard");
+    card.style.transform = "scale(1.03)";
+    card.style.boxShadow = "0 15px 45px rgba(0,255,255,0.7)";
+    setTimeout(()=>{card.style.transform="scale(1)"; card.style.boxShadow="";},800);
+  }catch(err){
+    donStatus.textContent = "❌ Transaction failed: " + (err.message || err);
+    console.error(err);
+  }
+});
+
+// --- Disaster Alerts ---
+genAlertBtn.addEventListener("click",async()=>{
+  if(!account){alert("Connect wallet first!");return;}
+  const type=document.getElementById("alertType").value;
+  const loc=document.getElementById("alertLocation").value||"Unknown";
+  const sev=document.getElementById("alertSeverity").value;
+  const timestamp=new Date().toLocaleString();
+  const alertMsg=`🚨 Disaster Alert\nType:${type}\nLocation:${loc}\nSeverity:${sev}\nTime:${timestamp}`;
+  try{
+    const signature=await ethereum.request({method:"personal_sign",params:[alertMsg,account]});
+    const div=document.createElement("div"); div.innerHTML=`<b>${type}</b> at <b>${loc}</b> [${sev}]<br>🕒 ${timestamp}<br>✍ ${signature.slice(0,20)}...`;
+    alertsList.prepend(div);
+    appendLog("Bot: New signed alert generated!"); speakText("New signed alert generated!",langEl.value);
+  }catch(err){alert("❌ Alert signing failed");}
+});
+</script>
+</body>
+</html>

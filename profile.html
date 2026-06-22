@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Blockchain Charity Donation</title>
+  <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0; padding: 0;
+      background: linear-gradient(135deg,#1e3c72,#2a5298);
+      background-image: url("bbl,jpg.jpg");
+      color: #fff;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(15px);
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+      text-align: center;
+      width: 350px;
+      animation: fadeIn 1.2s ease-in-out;
+    }
+    h1 { font-size: 28px; margin-bottom: 15px; }
+    button {
+      padding: 12px 20px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #ff9800;
+      color: #fff;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+    button:hover { background: #e68900; }
+    input {
+      width: 80%; padding: 12px;
+      border: none; border-radius: 10px;
+      margin: 10px 0;
+      text-align: center;
+      font-size: 15px;
+    }
+    .profile {
+      margin-top: 15px;
+      padding: 15px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.15);
+    }
+    @keyframes fadeIn {
+      from {opacity:0; transform: translateY(20px);}
+      to {opacity:1; transform: translateY(0);}
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🌍  Charity Donation</h1>
+    <p id="status">Connect your wallet to continue</p>
+    <button onclick="connectWallet()">🔗 Connect with MetaMask</button>
+
+    <div id="profile" class="profile" style="display:none;">
+      <p><b>Wallet:</b> <span id="walletAddress"></span></p>
+      <p><b>Balance:</b> <span id="walletBalance"></span> ETH</p>
+      <hr>
+      <h3>💖 Donate to Charity</h3>
+      <input type="number" id="donationAmount" placeholder="Enter amount in ETH">
+      <button onclick="donate()">🚀 Donate Now</button>
+    </div>
+  </div>
+
+  <script>
+    let provider, signer;
+
+    async function connectWallet() {
+      if (window.ethereum) {
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+        const address = await signer.getAddress();
+        const balance = await provider.getBalance(address);
+        const balanceInEth = ethers.utils.formatEther(balance);
+
+        document.getElementById("walletAddress").innerText = address;
+        document.getElementById("walletBalance").innerText = parseFloat(balanceInEth).toFixed(4);
+        document.getElementById("profile").style.display = "block";
+        document.getElementById("status").innerText = "✅ Wallet Connected";
+      } else {
+        alert("MetaMask is not installed! Please install MetaMask.");
+      }
+    }
+
+    async function donate() {
+      try {
+        const amount = document.getElementById("donationAmount").value;
+        if (!amount || amount <= 0) {
+          alert("Please enter a valid amount.");
+          return;
+        }
+
+        const tx = await signer.sendTransaction({
+          to: "0x6058e9B4e48E0f1Bc62735AE9Ed4CC533F230F6a", 
+          value: ethers.utils.parseEther(amount)
+        });
+
+        alert("🎉 Donation Successful!\nTx Hash: " + tx.hash);
+         window.location.href = "index.html";
+
+      } catch (err) {
+        alert("❌ Transaction Failed: " + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
